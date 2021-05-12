@@ -93,9 +93,9 @@ void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
     message.payloadlen = strlen(buff) + 1;
     int rc = client->publish(topic, message);
     printf("%s\r\n", buff);
-    for (int i = 0;i < 100; i++) {
+    /*for (int i = 0;i < 100; i++) {
       printf("%d %d %d\n", acceler_x[i], acceler_y[i], acceler_z[i]);
-    }
+    }*/
   }
   if (mode == 2 && (success_count < 10)) {
     if (angle_value < cosine[array_index]) {
@@ -354,9 +354,9 @@ int main(int argc, char* argv[]) {
       if (angle_value < 0.707) {
         //mqtt_queue2.call(&publish_message, &client);
         get1 = 1;
-        printf("%d\n", 1);
+        //printf("%d\n", 1);
         //myled3 = 1;
-      } else {printf("%d\n", 0); get1 = 0;}
+      } else {/*printf("%d\n", 0);*/ get1 = 0;}
       ThisThread::sleep_for(10ms);
       if (gesture_select == 1) {
           feature1_1[i] = get1;
@@ -370,9 +370,9 @@ int main(int argc, char* argv[]) {
          gap = acceler_z[i + 1] - acceler_z[i];
          if(gap > 3) {
            get2 = 3;
-           printf("%d\n", 3);
+           //printf("%d\n", 3);
 
-         }else {printf("%d\n", 4); get2 = 4;}
+         }else {/*printf("%d\n", 4); */get2 = 4;}
          if (gesture_select == 1) {
           feature1_2[i] = get2;
       }
