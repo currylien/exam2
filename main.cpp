@@ -27,11 +27,11 @@ uLCD_4DGL uLCD(D1, D0, D2);
 DigitalOut myled1(LED1);
 DigitalOut myled2(LED2);
 DigitalOut myled3(LED3);
-void UI_gesture(Arguments *in, Reply *out);
+void acc(Arguments *in, Reply *out);
 void angle_detection(Arguments *in, Reply *out);
-void gesture(void);
+void acc_collect(void);
 void angle_det(void);
-RPCFunction rpcUI(&UI_gesture, "UI_gesture");
+RPCFunction rpcacc(&acc, "acc");
 RPCFunction rpcangle(&angle_detection, "angle_detection");
 int angle[3] = {30,45,60};
 int angle_select = angle[0];
@@ -48,9 +48,11 @@ bool tilt_success = 0;
 volatile int message_num = 0;
 volatile int arrivedcount = 0;
 volatile bool closed = false;
-
+int16_t acceler_x[100] = {0};
+int16_t acceler_y[100] = {0};
+int16_t acceler_z[100] = {0};
 const char* topic = "Mbed";
-
+int start = 0;
 Thread mqtt_thread(osPriorityHigh);
 Thread mqtt_thread2(osPriorityHigh);
 EventQueue mqtt_queue;
@@ -79,7 +81,7 @@ void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
     mode = 0;
     MQTT::Message message;
     char buff[100];
-    sprintf(buff, "Select angle: %d", angle_select);
+    sprintf(buff, "gesture : %d", gesture_select);
     message.qos = MQTT::QOS0;
     message.retained = false;
     message.dup = false;
@@ -87,6 +89,9 @@ void publish_message(MQTT::Client<MQTTNetwork, Countdown>* client) {
     message.payloadlen = strlen(buff) + 1;
     int rc = client->publish(topic, message);
     printf("%s\r\n", buff);
+    for (int i = 0;i < 100; i++) {
+      printf("%d %d %d\n", acceler_x[i], acceler_y[i], acceler_z[i]);
+    }
   }
   if (mode == 2 && (success_count < 10)) {
     if (angle_value < cosine[array_index]) {
@@ -242,7 +247,7 @@ int main(int argc, char* argv[]) {
   MQTT::Client<MQTTNetwork, Countdown> client(mqttNetwork);
 
   //TODO: revise host to your IP
-  const char* host = "192.168.128.172";
+  const char* host = "192.168.128.69";
   printf("Connecting to TCP network...\r\n");
 
   SocketAddress sockAddr;
@@ -323,38 +328,42 @@ int main(int argc, char* argv[]) {
 
     // Produce an output
         if (gesture_index < label_num) {
+          start = 1;
           gesture_select = gesture_index;
           error_reporter->Report(config.output_message[gesture_index]);
         }
       
     }
     while (mode == 2) {
-      if (inital = 1) {
-      BSP_ACCELERO_AccGetXYZ(value);
+      //if (inital = 1) {
+      //BSP_ACCELERO_AccGetXYZ(value);
       //printf("%d %d %d\n", value[0], value[1], value[2]);
       float temp1, temp2;
-      temp1 = (float)((value[0]*initial_x + value[1]*initial_y + value[2]*initial_z));
-      temp2 = (sqrt((double)(value[0]*value[0]+value[1]*value[1]+value[2]*value[2]))*sqrt((double)(initial_x*initial_x+initial_y*initial_y+initial_z*initial_z)));
+      for (int i = 0; i < 99; i++) {
+      temp1 = (float)((acceler_x[i]*acceler_x[i + 1] + acceler_y[i]*acceler_y[i+1] + acceler_z[i]*acceler_z[i+1]));
+      temp2 = (sqrt((double)(acceler_x[i]*acceler_x[i]+acceler_y[i]*acceler_y[i]+acceler_z[i]*acceler_z[i]))*sqrt((double)(acceler_x[i+1]*acceler_x[i+1]+acceler_y[i+1]*acceler_y[i+1]+acceler_z[i+1]*acceler_z[i+1])));
       //printf("%.2f %.2f\n", temp1, temp2);
       angle_value = temp1 / temp2;
-      printf("%.3f\n", angle_value);
-      if (angle_value < cosine[array_index]) {
-        mqtt_queue2.call(&publish_message, &client);
-        myled3 = 1;
-      } else myled3 = 0;
-      ThisThread::sleep_for(500ms);
-      }
+      //printf("%.3f\n", angle_value);
+      if (angle_value < 0.707) {
+        //mqtt_queue2.call(&publish_message, &client);
+        printf("%d\n", 1);
+        //myled3 = 1;
+      } else printf("%d\n", 0);
+      ThisThread::sleep_for(10ms);
+      }mode = 0;
+      //}
     }
   }
 }
 
-void UI_gesture (Arguments *in, Reply *out) 
+void acc (Arguments *in, Reply *out) 
 {
-    queue.call(&gesture);
+    queue.call(&acc_collect);
     bool success = true;
     char buffer[200], outbuf[256];
     char strings[25];
-    sprintf(strings, "Start UI_gesture mode");
+    sprintf(strings, "Start acc mode");
     strcpy(buffer, strings);
     //RPC::call(buffer, outbuf);
     if (success) {
@@ -364,19 +373,23 @@ void UI_gesture (Arguments *in, Reply *out)
     }
 }
 
-void gesture() 
+void acc_collect() 
 {
   mode = 1;
   myled1 = 1;
   uLCD.cls();
-  uLCD.printf("%d",angle[0]);
+  //uLCD.printf("%d",angle[0]);
   int test1 = 3;
   int test2 = 3;
   int test3 = 3;
-  while(1) {
-    if (gesture_select == 0 && (test1 != 1)) {
+  int i = 0;
+  while (1) {
+    if(start = 1 && i < 100) {
+    BSP_ACCELERO_AccGetXYZ(value);
+
+    /*if (gesture_select == 0 && (test1 != 1)) {
       uLCD.cls();
-      uLCD.printf("Current angle: %d",angle[0]);
+      uLCD.printf("ring");
       angle_select = angle[0];
       array_index = 0;
       test1 = 1;
@@ -384,7 +397,7 @@ void gesture()
       test3 = 0;
     } else if (gesture_select == 1 && (test2 != 1)) {
       uLCD.cls();
-      uLCD.printf("Current angle: %d",angle[1]);
+      uLCD.printf("slope");
       angle_select = angle[1];
       array_index = 1;
       test1 = 0;
@@ -392,13 +405,22 @@ void gesture()
       test3 = 0;
     } else if (gesture_select == 2 && (test3 != 1)) {
       uLCD.cls();
-      uLCD.printf("Current angle: %d",angle[2]);
+      uLCD.printf("line");
       angle_select = angle[2];
       array_index = 2;
       test1 = 0;
       test2 = 0;
       test3 = 1;
+    }*/
+    acceler_x[i] = value[0];
+    acceler_y[i] = value[1];
+    acceler_z[i] = value[2];
+    i++;
+    //printf("%d %d %d\n",acceler_x[i],acceler_y[i], acceler_z[i]);
+    ThisThread::sleep_for(5ms);
     }
+    if(i >= 100) {i = 0;
+     start = 0;}
     if (mode == 0) {
       myled1 = 0;
       break;
@@ -408,9 +430,9 @@ void gesture()
 
 void angle_det(void) 
 {
-  inital = 0;
+  //inital = 0;
   mode = 2;
-  myled2 = 1;
+  /*myled2 = 1;
   int16_t pDataXYZ[3] = {0};
   int num = 0;
   int16_t x, y, z;
@@ -433,7 +455,7 @@ void angle_det(void)
   initial_x = xtest;
   initial_y = ytest;
   initial_z = ztest;
-  printf("Success initialize\n");
+  printf("Success initialize\n");*/
 }
 
 void angle_detection (Arguments *in, Reply *out) 
