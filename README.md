@@ -364,10 +364,10 @@ int main(int argc, char* argv[]) {
       //printf("%.3f\n", angle_value);
       if (angle_value < 0.707) {               // if angle > 45
         //mqtt_queue2.call(&publish_message, &client);
-        get1 = 1;
+        get1 = 1;                               // if angle > 45, output 1
         //printf("%d\n", 1);
         //myled3 = 1;
-      } else {/*printf("%d\n", 0);*/ get1 = 0;}
+      } else {/*printf("%d\n", 0);*/ get1 = 0;}  // if angle < 45, output2
       ThisThread::sleep_for(10ms);
       if (gesture_select == 1) {
           feature1_1[i] = get1;
@@ -387,10 +387,10 @@ int main(int argc, char* argv[]) {
          gap = acceler_z[i + 1] - acceler_z[i];
          if(gap > 3) {
            get2 = 3;
-           //printf("%d\n", 3);
+           //printf("%d\n", 3);                 // if change in z > 3, output 3
 
          }else {/*printf("%d\n", 4); */get2 = 4;}
-         if (gesture_select == 1) {
+         if (gesture_select == 1) {             // if change in z < 3, output 4
           feature1_2[i] = get2;
           printf("%d", get2);
       }
