@@ -51,6 +51,10 @@ volatile bool closed = false;
 int16_t acceler_x[100] = {0};
 int16_t acceler_y[100] = {0};
 int16_t acceler_z[100] = {0};
+int feature1_1[100] = {0};
+int feature2_1[100] = {0};
+int feature1_2[100] = {0};
+int feature2_2[100] = {0};
 const char* topic = "Mbed";
 int start = 0;
 Thread mqtt_thread(osPriorityHigh);
@@ -335,6 +339,8 @@ int main(int argc, char* argv[]) {
       
     }
     while (mode == 2) {
+      int get1;
+      int get2;
       //if (inital = 1) {
       //BSP_ACCELERO_AccGetXYZ(value);
       //printf("%d %d %d\n", value[0], value[1], value[2]);
@@ -347,11 +353,34 @@ int main(int argc, char* argv[]) {
       //printf("%.3f\n", angle_value);
       if (angle_value < 0.707) {
         //mqtt_queue2.call(&publish_message, &client);
+        get1 = 1;
         printf("%d\n", 1);
         //myled3 = 1;
-      } else printf("%d\n", 0);
+      } else {printf("%d\n", 0); get1 = 0;}
       ThisThread::sleep_for(10ms);
-      }mode = 0;
+      if (gesture_select == 1) {
+          feature1_1[i] = get1;
+      }
+      if (gesture_select == 2) {
+        feature2_1[i] = get1;
+      }
+      }
+      for (int i = 0; i < 99; i++) {
+         int gap;
+         gap = acceler_z[i + 1] - acceler_z[i];
+         if(gap > 3) {
+           get2 = 3;
+           printf("%d\n", 3);
+
+         }else {printf("%d\n", 4); get2 = 4;}
+         if (gesture_select == 1) {
+          feature1_2[i] = get2;
+      }
+      if (gesture_select == 2) {
+        feature2_2[i] = get2;
+      }
+      }
+      mode = 0;
       //}
     }
   }
