@@ -29,10 +29,13 @@ DigitalOut myled2(LED2);
 DigitalOut myled3(LED3);
 void acc(Arguments *in, Reply *out);
 void angle_detection(Arguments *in, Reply *out);
+//void test(Arguments *in, Reply *out);
 void acc_collect(void);
 void angle_det(void);
+//void test_g(void);
 RPCFunction rpcacc(&acc, "acc");
 RPCFunction rpcangle(&angle_detection, "angle_detection");
+//RPCFunction rpctest(&test, "test");
 int angle[3] = {30,45,60};
 int angle_select = angle[0];
 int gesture_select =0;
@@ -55,6 +58,8 @@ int feature1_1[100] = {0};
 int feature2_1[100] = {0};
 int feature1_2[100] = {0};
 int feature2_2[100] = {0};
+int feature3_1[100] = {0};
+int feature3_2[100] = {0};
 const char* topic = "Mbed";
 int start = 0;
 Thread mqtt_thread(osPriorityHigh);
@@ -63,8 +68,10 @@ EventQueue mqtt_queue;
 EventQueue mqtt_queue2;
 EventQueue queue;
 EventQueue queue2;
+EventQueue queue3;
 Thread th;
 Thread th2;
+Thread th3;
 
 void messageArrived(MQTT::MessageData& md) {
   MQTT::Message &message = md.message;
@@ -287,6 +294,7 @@ int main(int argc, char* argv[]) {
   FILE *devout = fdopen(&pc, "w");
   th.start(callback(&queue, &EventQueue::dispatch_forever));
   th2.start(callback(&queue2, &EventQueue::dispatch_forever));
+  th3.start(callback(&queue3, &EventQueue::dispatch_forever));
   BSP_ACCELERO_Init();
 
   while (true) {
@@ -360,9 +368,15 @@ int main(int argc, char* argv[]) {
       ThisThread::sleep_for(10ms);
       if (gesture_select == 1) {
           feature1_1[i] = get1;
+          printf("%d", get1);
       }
       if (gesture_select == 2) {
         feature2_1[i] = get1;
+        printf("%d", get1);
+      }
+      if (gesture_select == 0) {
+        feature3_1[i] = get1;
+        printf("%d", get1);
       }
       }
       for (int i = 0; i < 99; i++) {
@@ -375,9 +389,15 @@ int main(int argc, char* argv[]) {
          }else {/*printf("%d\n", 4); */get2 = 4;}
          if (gesture_select == 1) {
           feature1_2[i] = get2;
+          printf("%d", get2);
       }
       if (gesture_select == 2) {
         feature2_2[i] = get2;
+        printf("%d", get2);
+      }
+      if (gesture_select == 0) {
+        feature3_2[i] = get2;
+        printf("%d", get2);
       }
       }
       mode = 0;
@@ -502,3 +522,59 @@ void angle_detection (Arguments *in, Reply *out)
     out->putData("Failed");
   }
 }
+/*void test(Arguments *in, Reply *out) {
+  queue3.call(&test_g);
+  bool success = true;
+
+  char buffer[200], outbuf[256];
+  char strings[25];
+  sprintf(strings, "Start test mode");
+  strcpy(buffer, strings);
+  if (success) {
+    out->putData(buffer);
+  } else {
+    out->putData("Failed");
+  }
+} */
+/*void test_g(void){
+  mode = 3;
+  while (1) {
+    if(start = 1 && i < 100) {
+    BSP_ACCELERO_AccGetXYZ(value);
+
+    if (gesture_select == 0 && (test1 != 1)) {
+      uLCD.cls();
+      uLCD.printf("ring");
+      angle_select = angle[0];
+      array_index = 0;
+      test1 = 1;
+      test2 = 0;
+      test3 = 0;
+    } else if (gesture_select == 1 && (test2 != 1)) {
+      uLCD.cls();
+      uLCD.printf("slope");
+      angle_select = angle[1];
+      array_index = 1;
+      test1 = 0;
+      test2 = 1;
+      test3 = 0;
+    } else if (gesture_select == 2 && (test3 != 1)) {
+      uLCD.cls();
+      uLCD.printf("line");
+      angle_select = angle[2];
+      array_index = 2;
+      test1 = 0;
+      test2 = 0;
+      test3 = 1;
+    }
+    acceler_x[i] = value[0];
+    acceler_y[i] = value[1];
+    acceler_z[i] = value[2];
+    i++;
+    //printf("%d %d %d\n",acceler_x[i],acceler_y[i], acceler_z[i]);
+    ThisThread::sleep_for(5ms);
+    }
+    if(i >= 100) {i = 0;
+     start = 0;}
+  }   
+}*/
